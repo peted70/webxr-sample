@@ -5,7 +5,7 @@
 // 4. Run the render loop until the user decides to exit.
 // 5. End the XR session.
 
-function CheckXR() {
+function CheckXR(status) {
     if (navigator.xr) {
         navigator.xr.requestDevice()
             .then(xrDevice => {
@@ -13,18 +13,18 @@ function CheckXR() {
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
-                    // No XRDevices available.
-                    console.error('No XR devices available:', err);
+                    status.innerHTML = 'No XR devices available:' + err;
                 } else {
                     // An error occurred while requesting an XRDevice.
-                    console.error('Requesting XR device failed:', err);
+                    status.innerHTML = 'Requesting XR device failed:' + err;
                 }
             })
     } else {
-        console.log("This browser does not support the WebXR API.");
+        status.innerHTML = 'This browser does not support the WebXR API.';
     }
 }
 
 window.document.addEventListener('DOMContentLoaded', function(ev) {
-    CheckXR();
+    var status = document.getElementById('status');
+    CheckXR(status);
 });
