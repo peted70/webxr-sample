@@ -11,6 +11,10 @@ function CheckXR(status) {
             .then(xrDevice => {
                 // Advertise the AR/VR functionality to get a user gesture.
                 status.innerHTML = 'XR device found:' + xrDevice;
+
+                xrDevice.supportsSession({immersive: true}).then(() => {
+                    status.innerHTML += ' Immersive session supported';
+                });
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
