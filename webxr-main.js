@@ -15,6 +15,9 @@ function CheckXR(status) {
                 xrDevice.supportsSession({immersive: true}).then(() => {
                     status.innerHTML += ' Immersive session supported';
                 });
+                xrDevice.supportsSession({immersive: false}).then(() => {
+                    status.innerHTML += ' Non-Immersive session supported';
+                });
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
