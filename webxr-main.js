@@ -25,4 +25,6 @@ function CheckXR() {
     }
 }
 
-CheckXR();
+window.document.addEventListener('DOMContentLoaded', function(ev) {
+    CheckXR();
+});
