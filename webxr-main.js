@@ -10,6 +10,7 @@ function CheckXR(status) {
         navigator.xr.requestDevice()
             .then(xrDevice => {
                 // Advertise the AR/VR functionality to get a user gesture.
+                status.innerHTML = 'XR device found:' + xrDevice;
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
