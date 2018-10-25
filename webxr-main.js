@@ -13,18 +13,11 @@ function CheckXR(onSession) {
 
                 // Advertise the AR/VR functionality to get a user gesture.
                 vue.status = 'XR device found:' + xrDevice;
-                vue.device = xrDevice;
+                vue.xrDevice = xrDevice;
 
                 xrDevice.supportsSession({immersive: true}).then(() => {
                     console.log('Immersive session supported');
-                    xrDevice.requestSession({immersive: true}).then(xrSession => {
-                        vue.xrSession = xrSession;
-                        vue.immersiveSupported = true;
-                        onSession();
-                    })
-                    .catch(err => {
-                        console.log('Immersive session error ' + err);
-                    });
+                    vue.immersiveSupported = true;
                 })
                 .catch(err => {
                     console.log('Immersive session error ' + err);
@@ -34,17 +27,7 @@ function CheckXR(onSession) {
                     outputContext: ctx
                 }).then(() => {
                     console.log('Non-Immersive session supported');
-                    xrDevice.requestSession({
-                        immersive: false, 
-                        outputContext: ctx
-                    }).then(xrSession => {
-                        vue.xrSession = xrSession;
-                        vue.nonImmersiveSupported = true;
-                        onSession();
-                    })
-                    .catch(err => {
-                        console.log('Immersive session error ' + err);
-                    });
+                    vue.nonImmersiveSupported = true;
                 })
                 .catch(err => {
                     console.log(' Immersive session error ' + err);
@@ -77,6 +60,29 @@ function OnSession() {
     }
 }
 
+function startImmersiveSession() {
+    vue.xrDevice.requestSession({immersive: true}).then(xrSession => {
+        vue.xrSession = xrSession;
+        OnSession();
+    })
+    .catch(err => {
+        console.log('Immersive session error ' + err);
+    });
+}
+
+function startNonImmersiveSession() {
+    vue.xrDevice.requestSession({
+        immersive: false, 
+        outputContext: document.getElementById('non-immersive-canvas').getContext('xrpresent')
+    }).then(xrSession => {
+        vue.xrSession = xrSession;
+        OnSession();
+    })
+    .catch(err => {
+        console.log('Immersive session error ' + err);
+    });
+}
+
 window.document.addEventListener('DOMContentLoaded', function(ev) {
 
     vue = new Vue({
@@ -84,10 +90,18 @@ window.document.addEventListener('DOMContentLoaded', function(ev) {
         data: {
           status: '------',
           nonImmersiveSupported: false,
-          immersiveSupported: false,
-          device: null
+          immersiveSupported: false
           },
-        xrSession: null
+        methods: {
+            startImmersiveSession: function (event) {
+                startImmersiveSession();            
+            },
+            startNonImmersiveSession: function (event) {
+                startNonImmersiveSession();
+            }
+        },
+        xrSession: null,
+        xrDevice: null
     }) 
 
     CheckXR(OnSession);
