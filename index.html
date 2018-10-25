@@ -12,7 +12,14 @@
 <body>
     <div id="app">
         {{ status }}
+        <div v-model="xrSession">
+            <span>immersive: {{ immersive ? 'YES' : 'NO' }}</span>
+        </div>
+        <div>
+            <button :disabled="immersiveSupported === true">Enter Immersive</button>
+            <button :disabled="nonImmersiveSupported === true">Enter Non-Immersive</button>
+        </div>
+        <canvas id='non-immersive-canvas' width='1024px' height='768px'></canvas>
     </div>
-    <canvas id='non-immersive-canvas' width='1024px' height='768px'></canvas>
 </body>
 </html>

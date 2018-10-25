@@ -13,46 +13,49 @@ function CheckXR(onSession) {
 
                 // Advertise the AR/VR functionality to get a user gesture.
                 vue.status = 'XR device found:' + xrDevice;
+                vue.device = xrDevice;
 
                 xrDevice.supportsSession({immersive: true}).then(() => {
-                    vue.status += ' Immersive session supported';
+                    console.log('Immersive session supported');
                     xrDevice.requestSession({immersive: true}).then(xrSession => {
                         vue.xrSession = xrSession;
+                        vue.immersiveSupported = true;
                         onSession();
                     })
                     .catch(err => {
-                        vue.status += ' Immersive session error ' + err;
+                        console.log('Immersive session error ' + err);
                     });
                 })
                 .catch(err => {
-                    vue.status += ' Immersive session error ' + err;
+                    console.log('Immersive session error ' + err);
                 });
                 xrDevice.supportsSession({
                     immersive: false, 
                     outputContext: ctx
                 }).then(() => {
-                    vue.status += ' Non-Immersive session supported';
+                    console.log('Non-Immersive session supported');
                     xrDevice.requestSession({
                         immersive: false, 
                         outputContext: ctx
                     }).then(xrSession => {
                         vue.xrSession = xrSession;
+                        vue.nonImmersiveSupported = true;
                         onSession();
                     })
                     .catch(err => {
-                        vue.status += ' Immersive session error ' + err;
+                        console.log('Immersive session error ' + err);
                     });
                 })
                 .catch(err => {
-                    vue.status += ' Immersive session error ' + err;
+                    console.log(' Immersive session error ' + err);
                 });
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
-                    vue.status = 'No XR devices available:' + err;
+                    console.log('No XR devices available:' + err);
                 } else {
                     // An error occurred while requesting an XRDevice.
-                    vue.status = 'Requesting XR device failed:' + err;
+                    console.log('Requesting XR device failed:' + err);
                 }
             })
     } else {
@@ -66,26 +69,26 @@ function OnSession() {
     console.log('On Session Called');
 
     if (!glContext) {
-        //var canvas = document.getElementById('non-immersive-canvas');
         let canvas = document.createElement('canvas');
-        glContext = canvas.getContext('webgl');
+        glContext = canvas.getContext('webgl', { compatibleXRSession: vue.xrSession });
 
-        glContext.makeXRCompatible().then(() => {
-            // The content that will be shown on the device is defined by the session's
-            // baseLayer.
-            vue.xrSession.baseLayer = new XRWebGLLayer(vue.xrSession, glContext);
-          });
+        //var layer = new XRWebGLLayer(vue.xrSession, glContext);
+        //console.log(layer);
     }
 }
 
 window.document.addEventListener('DOMContentLoaded', function(ev) {
+
     vue = new Vue({
         el: '#app',
         data: {
-          status: '------'
-        },
+          status: '------',
+          nonImmersiveSupported: false,
+          immersiveSupported: false,
+          device: null
+          },
         xrSession: null
     }) 
-       
+
     CheckXR(OnSession);
 });
