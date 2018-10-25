@@ -5,34 +5,77 @@
 // 4. Run the render loop until the user decides to exit.
 // 5. End the XR session.
 
-function CheckXR(status) {
+function CheckXR(onSession) {
     if (navigator.xr) {
         navigator.xr.requestDevice()
             .then(xrDevice => {
+                let ctx = document.getElementById('non-immersive-canvas').getContext('xrpresent');
+
                 // Advertise the AR/VR functionality to get a user gesture.
-                status.innerHTML = 'XR device found:' + xrDevice;
+                vue.status = 'XR device found:' + xrDevice;
 
                 xrDevice.supportsSession({immersive: true}).then(() => {
-                    status.innerHTML += ' Immersive session supported';
+                    vue.status += ' Immersive session supported';
+                    xrDevice.requestSession({immersive: true}).then(xrSession => {
+                        vue.xrSession = xrSession;
+                        onSession();
+                    })
+                    .catch(err => {
+                        vue.status += ' Immersive session error ' + err;
+                    });
+                })
+                .catch(err => {
+                    vue.status += ' Immersive session error ' + err;
                 });
-                xrDevice.supportsSession({immersive: false}).then(() => {
-                    status.innerHTML += ' Non-Immersive session supported';
+                xrDevice.supportsSession({
+                    immersive: false, 
+                    outputContext: ctx
+                }).then(() => {
+                    vue.status += ' Non-Immersive session supported';
+                    xrDevice.requestSession({
+                        immersive: false, 
+                        outputContext: ctx
+                    }).then(xrSession => {
+                        vue.xrSession = xrSession;
+                        onSession();
+                    })
+                    .catch(err => {
+                        vue.status += ' Immersive session error ' + err;
+                    });
+                })
+                .catch(err => {
+                    vue.status += ' Immersive session error ' + err;
                 });
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
-                    status.innerHTML = 'No XR devices available:' + err;
+                    vue.status = 'No XR devices available:' + err;
                 } else {
                     // An error occurred while requesting an XRDevice.
-                    status.innerHTML = 'Requesting XR device failed:' + err;
+                    vue.status = 'Requesting XR device failed:' + err;
                 }
             })
     } else {
-        status.innerHTML = 'This browser does not support the WebXR API.';
+        vue.status = 'This browser does not support the WebXR API.';
     }
 }
 
+function OnSession() {
+    var session = vue.xrSession;
+    console.log('On Session Called');
+
+    // poll for a device pose...
+    
+}
+
 window.document.addEventListener('DOMContentLoaded', function(ev) {
-    var status = document.getElementById('status');
-    CheckXR(status);
+    vue = new Vue({
+        el: '#app',
+        data: {
+          status: '------'
+        },
+        xrSession: null
+    }) 
+       
+    CheckXR(OnSession);
 });
