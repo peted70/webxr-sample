@@ -60,12 +60,22 @@ function CheckXR(onSession) {
     }
 }
 
+let glContext = null;
+
 function OnSession() {
-    var session = vue.xrSession;
     console.log('On Session Called');
 
-    // poll for a device pose...
-    
+    if (!glContext) {
+        //var canvas = document.getElementById('non-immersive-canvas');
+        let canvas = document.createElement('canvas');
+        glContext = canvas.getContext('webgl');
+
+        glContext.makeXRCompatible().then(() => {
+            // The content that will be shown on the device is defined by the session's
+            // baseLayer.
+            vue.xrSession.baseLayer = new XRWebGLLayer(vue.xrSession, glContext);
+          });
+    }
 }
 
 window.document.addEventListener('DOMContentLoaded', function(ev) {
