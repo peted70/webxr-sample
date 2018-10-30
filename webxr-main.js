@@ -53,10 +53,10 @@ function OnSession() {
 
     if (!glContext) {
         let canvas = document.createElement('canvas');
-        glContext = canvas.getContext('webgl', { compatibleXRSession: vue.xrSession });
+        glContext = canvas.getContext('webgl', { compatibleXRDevice: vue.xrDevice });//, { compatibleXRSession: vue.xrSession });
 
-        //var layer = new XRWebGLLayer(vue.xrSession, glContext);
-        //console.log(layer);
+        var layer = new XRWebGLLayer(vue.xrSession, glContext);
+        console.log(layer);
     }
 }
 
