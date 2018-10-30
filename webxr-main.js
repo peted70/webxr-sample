@@ -15,23 +15,23 @@ function CheckXR(onSession) {
                 vue.status = 'XR device found:' + xrDevice;
                 vue.xrDevice = xrDevice;
 
-                xrDevice.supportsSession({immersive: true}).then(() => {
+                xrDevice.supportsSession({ immersive: true }).then(() => {
                     console.log('Immersive session supported');
                     vue.immersiveSupported = true;
                 })
-                .catch(err => {
-                    console.log('Immersive session error ' + err);
-                });
+                    .catch(err => {
+                        console.log('Immersive session error ' + err);
+                    });
                 xrDevice.supportsSession({
-                    immersive: false, 
+                    immersive: false,
                     outputContext: ctx
                 }).then(() => {
                     console.log('Non-Immersive session supported');
                     vue.nonImmersiveSupported = true;
                 })
-                .catch(err => {
-                    console.log(' Immersive session error ' + err);
-                });
+                    .catch(err => {
+                        console.log(' Immersive session error ' + err);
+                    });
             })
             .catch(err => {
                 if (err.name === 'NotFoundError') {
@@ -46,55 +46,108 @@ function CheckXR(onSession) {
     }
 }
 
+function onDrawFrame(timestamp, xrFrame) {
+    let session = xrFrame.session;
+
+    // Do we have an active session?
+    if (session) {
+        let pose = xrFrame.getDevicePose(xrFOfRef);
+        glContext.bindFramebuffer(glContext.FRAMEBUFFER, session.baseLayer.framebuffer);
+
+        for (let view of xrFrame.views) {
+            let viewport = session.baseLayer.getViewport(view);
+            glContext.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+            drawScene(view, pose);
+        }
+
+        // Request the next animation callback
+        session.requestAnimationFrame(onDrawFrame);
+    } else {
+        // No session available, so render a default mono view.
+        glContext.viewport(0, 0, glCanvas.width, glCanvas.height);
+        drawScene();
+
+        // Request the next window callback
+        window.requestAnimationFrame(onDrawFrame);
+    }
+}
+
+function drawScene(view, pose) {
+    let viewMatrix = null;
+    let projectionMatrix = null;
+    if (view) {
+        viewMatrix = pose.getViewMatrix(view);
+        projectionMatrix = view.projectionMatrix;
+    } else {
+        viewMatrix = defaultViewMatrix;
+        projectionMatrix = defaultProjectionMatrix;
+    }
+}
+
 let glContext = null;
+let glCanvas = null;
+let xrFOfRef = null;
 
 function OnSession() {
     console.log('On Session Called');
 
     if (!glContext) {
-        let canvas = document.createElement('canvas');
-        glContext = canvas.getContext('webgl', { compatibleXRDevice: vue.xrDevice });//, { compatibleXRSession: vue.xrSession });
+        glCanvas = document.createElement('canvas');
+        glContext = glCanvas.getContext('webgl', { compatibleXRDevice: vue.xrDevice });
 
         var layer = new XRWebGLLayer(vue.xrSession, glContext);
         console.log(layer);
+        vue.xrSession.baseLayer = layer;
+
+        vue.xrSession.requestFrameOfReference('eye-level').then((frameOfRef) => {
+            // Since we're dealing with multple sessions now we need to track
+            // which XRFrameOfReference is associated with which XRSession.
+            xrFOfRef = frameOfRef;
+            // if (vue.xrSession.immersive) {
+            //   xrImmersiveFrameOfRef = frameOfRef;
+            // } else {
+            //   xrNonImmersiveFrameOfRef = frameOfRef;
+            // }
+            vue.xrSession.requestAnimationFrame(onDrawFrame);
+        });
     }
 }
 
 function startImmersiveSession() {
-    vue.xrDevice.requestSession({immersive: true}).then(xrSession => {
+    vue.xrDevice.requestSession({ immersive: true }).then(xrSession => {
         vue.xrSession = xrSession;
         OnSession();
     })
-    .catch(err => {
-        console.log('Immersive session error ' + err);
-    });
+        .catch(err => {
+            console.log('Immersive session error ' + err);
+        });
 }
 
 function startNonImmersiveSession() {
     vue.xrDevice.requestSession({
-        immersive: false, 
+        immersive: false,
         outputContext: document.getElementById('non-immersive-canvas').getContext('xrpresent')
     }).then(xrSession => {
         vue.xrSession = xrSession;
         OnSession();
     })
-    .catch(err => {
-        console.log('Immersive session error ' + err);
-    });
+        .catch(err => {
+            console.log('Immersive session error ' + err);
+        });
 }
 
-window.document.addEventListener('DOMContentLoaded', function(ev) {
+window.document.addEventListener('DOMContentLoaded', function (ev) {
 
     vue = new Vue({
         el: '#app',
         data: {
-          status: '------',
-          nonImmersiveSupported: false,
-          immersiveSupported: false
-          },
+            status: '------',
+            nonImmersiveSupported: false,
+            immersiveSupported: false
+        },
         methods: {
             startImmersiveSession: function (event) {
-                startImmersiveSession();            
+                startImmersiveSession();
             },
             startNonImmersiveSession: function (event) {
                 startNonImmersiveSession();
@@ -102,7 +155,7 @@ window.document.addEventListener('DOMContentLoaded', function(ev) {
         },
         xrSession: null,
         xrDevice: null
-    }) 
+    })
 
     CheckXR(OnSession);
 });
