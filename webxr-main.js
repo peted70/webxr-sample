@@ -47,21 +47,23 @@ function CheckXR(onSession) {
 }
 
 function onDrawFrame(timestamp, xrFrame) {
-    let session = xrFrame.session;
-
+    console.log("onDrawFrame called");
+    
     // Do we have an active session?
-    if (session) {
-        let pose = xrFrame.getDevicePose(xrFOfRef);
-        glContext.bindFramebuffer(glContext.FRAMEBUFFER, session.baseLayer.framebuffer);
-
-        for (let view of xrFrame.views) {
-            let viewport = session.baseLayer.getViewport(view);
-            glContext.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-            drawScene(view, pose);
-        }
-
+    if (xrFrame.session) {
         // Request the next animation callback
-        session.requestAnimationFrame(onDrawFrame);
+        xrFrame.session.requestAnimationFrame(onDrawFrame);
+
+        let pose = xrFrame.getDevicePose(xrFOfRef);
+        if (pose) {
+            glContext.bindFramebuffer(glContext.FRAMEBUFFER, xrFrame.session.baseLayer.framebuffer);
+
+            for (let view of xrFrame.views) {
+                let viewport = xrFrame.session.baseLayer.getViewport(view);
+                glContext.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+                drawScene(view, pose);
+            }
+        }
     } else {
         // No session available, so render a default mono view.
         glContext.viewport(0, 0, glCanvas.width, glCanvas.height);
