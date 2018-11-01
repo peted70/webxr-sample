@@ -48,7 +48,7 @@ function CheckXR(onSession) {
 
 function onDrawFrame(timestamp, xrFrame) {
     console.log("onDrawFrame called");
-    
+
     // Do we have an active session?
     if (xrFrame.session) {
         // Request the next animation callback
@@ -75,6 +75,12 @@ function onDrawFrame(timestamp, xrFrame) {
 }
 
 function drawScene(view, pose) {
+    let time = Date.now();
+    glContext.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 1.0);
+
+    // Clear the framebuffer
+    glContext.clear(glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT);
+
     let viewMatrix = null;
     let projectionMatrix = null;
     if (view) {
@@ -84,6 +90,8 @@ function drawScene(view, pose) {
         viewMatrix = defaultViewMatrix;
         projectionMatrix = defaultProjectionMatrix;
     }
+
+    
 }
 
 let glContext = null;
