@@ -74,6 +74,35 @@ function onDrawFrame(timestamp, xrFrame) {
     }
 }
 
+function createShaders(gl, vShaderSrc, fShaderSrc) {
+    let vs = gl.createShader(gl.VERTEX_SHADER);
+    let fs = gl.createShader(gl.FRAGMENT_SHADER);
+
+    gl.shaderSource(vs, vShaderSrc);
+    gl.shaderSource(fs, fShaderSrc);
+
+    gl.compileShader(vs);
+    if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+        console.log('ERROR Compiling vertex shader ' + gl.getShaderInfoLog(vs));
+        return null;
+    }
+    gl.compileShader(fs);
+    if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+        console.log('ERROR Compiling vertex shader ' + gl.getShaderInfoLog(vs));
+        return null;
+    }
+
+    let program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+
+    if (gl.linkProgram(program) == 0) {
+        console.log('linkedin shader program failed');
+        return null;
+    }
+    return program;
+}
+
 function drawScene(view, pose) {
     let time = Date.now();
     glContext.clearColor(Math.cos(time / 2000), Math.cos(time / 4000), Math.cos(time / 6000), 1.0);
@@ -91,7 +120,7 @@ function drawScene(view, pose) {
         projectionMatrix = defaultProjectionMatrix;
     }
 
-    
+
 }
 
 let glContext = null;
@@ -108,6 +137,14 @@ function OnSession() {
         var layer = new XRWebGLLayer(vue.xrSession, glContext);
         console.log(layer);
         vue.xrSession.baseLayer = layer;
+
+        // Load the src code for the shaders
+        let vs = document.getElementById('vertex-shader');
+        let fs = document.getElementById('vertex-shader');
+
+        // Create and use the resulting shader program
+        let shaderProgram = createShaders(glContext, vs, fs);
+        glContext.useProgram(shaderProgram);
 
         vue.xrSession.requestFrameOfReference('eye-level').then((frameOfRef) => {
             // Since we're dealing with multple sessions now we need to track
@@ -128,9 +165,9 @@ function startImmersiveSession() {
         vue.xrSession = xrSession;
         OnSession();
     })
-        .catch(err => {
-            console.log('Immersive session error ' + err);
-        });
+    .catch(err => {
+        console.log('Immersive session error ' + err);
+    });
 }
 
 function startNonImmersiveSession() {
@@ -141,9 +178,9 @@ function startNonImmersiveSession() {
         vue.xrSession = xrSession;
         OnSession();
     })
-        .catch(err => {
-            console.log('Immersive session error ' + err);
-        });
+    .catch(err => {
+        console.log('Immersive session error ' + err);
+    });
 }
 
 window.document.addEventListener('DOMContentLoaded', function (ev) {
