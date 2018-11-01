@@ -5,6 +5,53 @@
 // 4. Run the render loop until the user decides to exit.
 // 5. End the XR session.
 
+const cubeVertices = [
+    // Front face
+    -1.0, -1.0,  1.0,
+     1.0, -1.0,  1.0,
+     1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    
+    // Back face
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0, -1.0, -1.0,
+    
+    // Top face
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+     1.0,  1.0,  1.0,
+     1.0,  1.0, -1.0,
+    
+    // Bottom face
+    -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, -1.0,  1.0,
+    -1.0, -1.0,  1.0,
+    
+    // Right face
+     1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+     1.0,  1.0,  1.0,
+     1.0, -1.0,  1.0,
+    
+    // Left face
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    -1.0,  1.0, -1.0,
+];
+
+const cubeIndices = [
+    0,  1,  2,      0,  2,  3,    // front
+    4,  5,  6,      4,  6,  7,    // back
+    8,  9,  10,     8,  10, 11,   // top
+    12, 13, 14,     12, 14, 15,   // bottom
+    16, 17, 18,     16, 18, 19,   // right
+    20, 21, 22,     20, 22, 23,   // left
+];
+
 function CheckXR(onSession) {
     if (navigator.xr) {
         navigator.xr.requestDevice()
@@ -120,7 +167,23 @@ function drawScene(view, pose) {
         projectionMatrix = defaultProjectionMatrix;
     }
 
+    // Set up uniforms and draw buffers...
 
+}
+
+function initialiseBuffers(gl) {
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);
+
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeIndices), gl.STATIC_DRAW);
+
+    return {
+        positions: positionBuffer,
+        indices: indexBuffer
+    };
 }
 
 let glContext = null;
@@ -140,11 +203,13 @@ function OnSession() {
 
         // Load the src code for the shaders
         let vs = document.getElementById('vertex-shader');
-        let fs = document.getElementById('vertex-shader');
+        let fs = document.getElementById('fragment-shader');
 
         // Create and use the resulting shader program
         let shaderProgram = createShaders(glContext, vs, fs);
         glContext.useProgram(shaderProgram);
+
+        vue.buffers = initialiseBuffers(glContext);
 
         vue.xrSession.requestFrameOfReference('eye-level').then((frameOfRef) => {
             // Since we're dealing with multple sessions now we need to track
@@ -201,7 +266,8 @@ window.document.addEventListener('DOMContentLoaded', function (ev) {
             }
         },
         xrSession: null,
-        xrDevice: null
+        xrDevice: null,
+        buffers: null
     })
 
     CheckXR(OnSession);
