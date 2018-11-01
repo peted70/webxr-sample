@@ -167,7 +167,23 @@ function drawScene(view, pose) {
         projectionMatrix = defaultProjectionMatrix;
     }
 
+    // define a model matrix..
+    const modelMatrix = mat4.create();
+    modelMatrix.rotate(0.0, 0.7, 0.0, [0, 1, 0]);
+
+    let worldLoc = glContext.getUniformLocation(vue.shaderProgram, 'uModelMatrix');
+    let viewLoc = glContext.getUniformLocation(vue.shaderProgram, 'uViewMatrix');
+    let projLoc = glContext.getUniformLocation(vue.shaderProgram, 'uProjectionMatrix');
+
     // Set up uniforms and draw buffers...
+    glContext.uniformMatrix4fv(worldLoc, false, modelMatrix);
+    glContext.uniformMatrix4fv(viewLoc, false, viewMatrix);
+    glContext.uniformMatrix4fv(projLoc, false, projectionMatrix);
+ 
+    const vertexCount = 36;
+    const type = gl.UNSIGNED_SHORT;
+    const offset = 0;
+    glContext.drawElements(gl.TRIANGLES, vertexCount, type, offset);
 
 }
 
@@ -206,8 +222,8 @@ function OnSession() {
         let fs = document.getElementById('fragment-shader');
 
         // Create and use the resulting shader program
-        let shaderProgram = createShaders(glContext, vs, fs);
-        glContext.useProgram(shaderProgram);
+        vue.shaderProgram = createShaders(glContext, vs, fs);
+        glContext.useProgram(vue.shaderProgram);
 
         vue.buffers = initialiseBuffers(glContext);
 
@@ -267,7 +283,8 @@ window.document.addEventListener('DOMContentLoaded', function (ev) {
         },
         xrSession: null,
         xrDevice: null,
-        buffers: null
+        buffers: null,
+        shaderProgram: null
     })
 
     CheckXR(OnSession);

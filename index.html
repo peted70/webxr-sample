@@ -10,9 +10,11 @@
     <script src="webxr-main.js"></script>
     <script type="glsl" id="vertex-shader">
         attribute vec3 position;
-        uniform mat4 worldViewProjection;        
+        uniform mat4 uModelMatrix;        
+        uniform mat4 uProjectionMatrix;        
+        uniform mat4 uViewMatrix;        
         void main() {
-            gl_Position = worldViewProjection * vec4(position, 1.0);    
+            gl_Position = uModelMatrix * uViewMatrix * uProjectionMatrix * vec4(position, 1.0);    
         }
     </script>
     <script type="glsl" id="fragment-shader">
