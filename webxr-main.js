@@ -97,7 +97,7 @@ function onDrawFrame(timestamp, xrFrame) {
     console.log("onDrawFrame called");
 
     // Do we have an active session?
-    if (xrFrame.session) {
+    if (xrFrame && xrFrame.session) {
         // Request the next animation callback
         xrFrame.session.requestAnimationFrame(onDrawFrame);
 
@@ -168,8 +168,12 @@ function drawScene(view, pose) {
     }
 
     // define a model matrix..
-    const modelMatrix = mat4.create();
-    modelMatrix.rotate(0.0, 0.7, 0.0, [0, 1, 0]);
+    const modelMatrix = [
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 20.0,
+        0.0, 0.0, 0.0, 1.0,
+    ];
 
     let worldLoc = glContext.getUniformLocation(vue.shaderProgram, 'uModelMatrix');
     let viewLoc = glContext.getUniformLocation(vue.shaderProgram, 'uViewMatrix');
@@ -181,9 +185,9 @@ function drawScene(view, pose) {
     glContext.uniformMatrix4fv(projLoc, false, projectionMatrix);
  
     const vertexCount = 36;
-    const type = gl.UNSIGNED_SHORT;
+    const type = glContext.UNSIGNED_SHORT;
     const offset = 0;
-    glContext.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    glContext.drawElements(glContext.TRIANGLES, vertexCount, type, offset);
 
 }
 
@@ -206,20 +210,16 @@ let glContext = null;
 let glCanvas = null;
 let xrFOfRef = null;
 
-function OnSession() {
+function OnSession(isXr) {
     console.log('On Session Called');
 
     if (!glContext) {
         glCanvas = document.createElement('canvas');
         glContext = glCanvas.getContext('webgl', { compatibleXRDevice: vue.xrDevice });
 
-        var layer = new XRWebGLLayer(vue.xrSession, glContext);
-        console.log(layer);
-        vue.xrSession.baseLayer = layer;
-
         // Load the src code for the shaders
-        let vs = document.getElementById('vertex-shader');
-        let fs = document.getElementById('fragment-shader');
+        let vs = document.getElementById('vertex-shader').innerHTML;
+        let fs = document.getElementById('fragment-shader').innerHTML;
 
         // Create and use the resulting shader program
         vue.shaderProgram = createShaders(glContext, vs, fs);
@@ -227,24 +227,32 @@ function OnSession() {
 
         vue.buffers = initialiseBuffers(glContext);
 
-        vue.xrSession.requestFrameOfReference('eye-level').then((frameOfRef) => {
-            // Since we're dealing with multple sessions now we need to track
-            // which XRFrameOfReference is associated with which XRSession.
-            xrFOfRef = frameOfRef;
-            // if (vue.xrSession.immersive) {
-            //   xrImmersiveFrameOfRef = frameOfRef;
-            // } else {
-            //   xrNonImmersiveFrameOfRef = frameOfRef;
-            // }
-            vue.xrSession.requestAnimationFrame(onDrawFrame);
-        });
+        if (isXr) {
+            var layer = new XRWebGLLayer(vue.xrSession, glContext);
+            console.log(layer);
+            vue.xrSession.baseLayer = layer;
+
+            vue.xrSession.requestFrameOfReference('eye-level').then((frameOfRef) => {
+                // Since we're dealing with multple sessions now we need to track
+                // which XRFrameOfReference is associated with which XRSession.
+                xrFOfRef = frameOfRef;
+                // if (vue.xrSession.immersive) {
+                //   xrImmersiveFrameOfRef = frameOfRef;
+                // } else {
+                //   xrNonImmersiveFrameOfRef = frameOfRef;
+                // }
+                vue.xrSession.requestAnimationFrame(onDrawFrame);
+            });
+        } else {
+            window.requestAnimationFrame(onDrawFrame);
+        }
     }
 }
 
 function startImmersiveSession() {
     vue.xrDevice.requestSession({ immersive: true }).then(xrSession => {
         vue.xrSession = xrSession;
-        OnSession();
+        OnSession(true);
     })
     .catch(err => {
         console.log('Immersive session error ' + err);
@@ -257,11 +265,17 @@ function startNonImmersiveSession() {
         outputContext: document.getElementById('non-immersive-canvas').getContext('xrpresent')
     }).then(xrSession => {
         vue.xrSession = xrSession;
-        OnSession();
+        OnSession(true);
     })
     .catch(err => {
         console.log('Immersive session error ' + err);
     });
+}
+
+// Create a standard webGL session so we can verify that the rendering code works
+// ok
+function startWebGLSession() {
+    OnSession(false);
 }
 
 window.document.addEventListener('DOMContentLoaded', function (ev) {
@@ -279,6 +293,9 @@ window.document.addEventListener('DOMContentLoaded', function (ev) {
             },
             startNonImmersiveSession: function (event) {
                 startNonImmersiveSession();
+            },
+            startWebGLSession: function (event) {
+                startWebGLSession();
             }
         },
         xrSession: null,

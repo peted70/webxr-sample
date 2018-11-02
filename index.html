@@ -6,6 +6,7 @@
     <title>WebXR Sample</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="webxr-main.css" />
+    <script src="http://benvanik.github.com/WebGL-Inspector/core/embed.js"></script>
     <script src="https://npmcdn.com/vue/dist/vue.js"></script>
     <script src="webxr-main.js"></script>
     <script type="glsl" id="vertex-shader">
@@ -29,6 +30,7 @@
         <div>
             <button :disabled="immersiveSupported === false" v-on:click="startImmersiveSession">Enter Immersive</button>
             <button :disabled="nonImmersiveSupported === false" v-on:click="startNonImmersiveSession">Enter Non-Immersive</button>
+            <button v-on:click="startWebGLSession">Enter WebGL</button>
         </div>
         <canvas id='non-immersive-canvas' width='1024px' height='768px'></canvas>
     </div>
